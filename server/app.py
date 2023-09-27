@@ -1,3 +1,5 @@
+# server/app.py
+
 #!/usr/bin/env python3
 
 from flask import Flask, request, make_response
@@ -16,12 +18,12 @@ db.init_app(app)
 
 api = Api(app)
 
-class Home(Resource):
+class Index(Resource):
 
     def get(self):
         
         response_dict = {
-            "message": "Welcome to the Newsletter RESTful API",
+            "index": "Welcome to the Newsletter RESTful API",
         }
         
         response = make_response(
@@ -31,7 +33,7 @@ class Home(Resource):
 
         return response
 
-api.add_resource(Home, '/')
+api.add_resource(Index, '/')
 
 class Newsletters(Resource):
 
@@ -80,8 +82,42 @@ class NewsletterByID(Resource):
 
         return response
 
+    def patch(self, id):
+
+        record = Newsletter.query.filter_by(id=id).first()
+        for attr in request.form:
+            setattr(record, attr, request.form[attr])
+
+        db.session.add(record)
+        db.session.commit()
+
+        response_dict = record.to_dict()
+
+        response = make_response(
+            response_dict,
+            200
+        )
+
+        return response
+
+    def delete(self, id):
+
+        record = Newsletter.query.filter_by(id=id).first()
+        
+        db.session.delete(record)
+        db.session.commit()
+
+        response_dict = {"message": "record successfully deleted"}
+
+        response = make_response(
+            response_dict,
+            200
+        )
+
+        return response
+
 api.add_resource(NewsletterByID, '/newsletters/<int:id>')
 
 
 if __name__ == '__main__':
-    app.run(port=5555, debug=True)
+    app.run(port=5554, debug=True)
